@@ -183,7 +183,7 @@ pub enum Token {
     /// A serialized unit struct of the given name.
     ///
     /// ```
-    /// # use serde_derive::{Deserialize, Serialize};
+    /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
     /// # fn main() {
@@ -198,7 +198,7 @@ pub enum Token {
     /// A unit variant of an enum.
     ///
     /// ```
-    /// # use serde_derive::{Deserialize, Serialize};
+    /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
     /// # fn main() {
@@ -227,7 +227,7 @@ pub enum Token {
     /// After this header is the value contained in the newtype struct.
     ///
     /// ```
-    /// # use serde_derive::{Deserialize, Serialize};
+    /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
     /// # fn main() {
@@ -248,7 +248,7 @@ pub enum Token {
     /// After this header is the value contained in the newtype variant.
     ///
     /// ```
-    /// # use serde_derive::{Deserialize, Serialize};
+    /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
     /// # fn main() {
@@ -329,7 +329,7 @@ pub enum Token {
     /// `TupleStructEnd`.
     ///
     /// ```
-    /// # use serde_derive::{Deserialize, Serialize};
+    /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
     /// # fn main() {
@@ -359,7 +359,7 @@ pub enum Token {
     /// `TupleVariantEnd`.
     ///
     /// ```
-    /// # use serde_derive::{Deserialize, Serialize};
+    /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
     /// # fn main() {
@@ -428,7 +428,7 @@ pub enum Token {
     /// After this header are the fields of the struct, followed by `StructEnd`.
     ///
     /// ```
-    /// # use serde_derive::{Deserialize, Serialize};
+    /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
     /// # fn main() {
@@ -463,7 +463,7 @@ pub enum Token {
     /// `StructVariantEnd`.
     ///
     /// ```
-    /// # use serde_derive::{Deserialize, Serialize};
+    /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
     /// # fn main() {
@@ -500,7 +500,7 @@ pub enum Token {
     /// The header to an enum of the given name.
     ///
     /// ```
-    /// # use serde_derive::{Deserialize, Serialize};
+    /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
     /// # fn main() {

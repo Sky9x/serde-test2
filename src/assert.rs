@@ -7,7 +7,7 @@ use std::fmt::Debug;
 /// Runs both `assert_ser_tokens` and `assert_de_tokens`.
 ///
 /// ```
-/// # use serde_derive::{Deserialize, Serialize};
+/// # use serde::{Deserialize, Serialize};
 /// # use serde_test::{assert_tokens, Token};
 /// #
 /// #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -41,7 +41,7 @@ where
 /// Asserts that `value` serializes to the given `tokens`.
 ///
 /// ```
-/// # use serde_derive::{Deserialize, Serialize};
+/// # use serde::{Deserialize, Serialize};
 /// # use serde_test::{assert_ser_tokens, Token};
 /// #
 /// #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -83,7 +83,7 @@ where
 /// `error`.
 ///
 /// ```
-/// use serde_derive::Serialize;
+/// use serde::Serialize;
 /// use serde_test::{assert_ser_tokens_error, Token};
 /// use std::sync::{Arc, Mutex};
 /// use std::thread;
@@ -140,7 +140,7 @@ where
 /// Asserts that the given `tokens` deserialize into `value`.
 ///
 /// ```
-/// # use serde_derive::{Deserialize, Serialize};
+/// # use serde::{Deserialize, Serialize};
 /// # use serde_test::{assert_de_tokens, Token};
 /// #
 /// #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -197,7 +197,7 @@ where
 /// Asserts that the given `tokens` yield `error` when deserializing.
 ///
 /// ```
-/// # use serde_derive::{Deserialize, Serialize};
+/// # use serde::{Deserialize, Serialize};
 /// # use serde_test::{assert_de_tokens_error, Token};
 /// #
 /// #[derive(Serialize, Deserialize, PartialEq, Debug)]
