@@ -7,10 +7,11 @@ use serde::de::{
     VariantAccess, Visitor,
 };
 use serde::forward_to_deserialize_any;
+use std::{iter, slice};
 
 #[derive(Debug)]
 pub struct Deserializer<'test, 'de: 'test> {
-    tokens: &'test [Token<'test, 'de>],
+    tokens: iter::Copied<slice::Iter<'test, Token<'test, 'de>>>,
 }
 
 fn assert_next_token<'test, 'de>(
@@ -43,11 +44,16 @@ fn end_of_tokens() -> Error {
 
 impl<'test, 'de> Deserializer<'test, 'de> {
     pub fn new(tokens: &'test [Token<'test, 'de>]) -> Self {
-        Deserializer { tokens }
+        Deserializer {
+            tokens: tokens.iter().copied(),
+        }
     }
 
     fn peek_token_opt(&self) -> Option<Token<'test, 'de>> {
-        self.tokens.first().copied()
+        self.tokens
+            .clone()
+            // ignore skip field tokens while deserializing
+            .find(|t| !matches!(t, Token::SkipStructField { .. }))
     }
 
     fn peek_token(&self) -> TestResult<Token<'test, 'de>> {
@@ -55,19 +61,13 @@ impl<'test, 'de> Deserializer<'test, 'de> {
     }
 
     pub fn next_token_opt(&mut self) -> Option<Token<'test, 'de>> {
-        match self.tokens.split_first() {
-            Some((&first, rest)) => {
-                self.tokens = rest;
-                Some(first)
-            }
-            None => None,
-        }
+        self.tokens
+            // ignore skip field tokens while deserializing
+            .find(|t| !matches!(t, Token::SkipStructField { .. }))
     }
 
     fn next_token(&mut self) -> TestResult<Token<'test, 'de>> {
-        let (&first, rest) = self.tokens.split_first().ok_or_else(end_of_tokens)?;
-        self.tokens = rest;
-        Ok(first)
+        self.next_token_opt().ok_or_else(end_of_tokens)
     }
 
     pub fn remaining(&self) -> usize {
@@ -221,6 +221,7 @@ impl<'a, 'test, 'de> de::Deserializer<'de> for &'a mut Deserializer<'test, 'de> 
             | Token::StructEnd
             | Token::TupleVariantEnd
             | Token::StructVariantEnd => Err(unexpected(token)),
+            Token::SkipStructField { .. } => unreachable!("always ignored by next_token"),
         }
     }
 

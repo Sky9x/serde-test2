@@ -362,13 +362,6 @@ pub struct ComplexSerializer<'a, 'test: 'a> {
     end: EndToken,
 }
 
-impl ComplexSerializer<'_, '_> {
-    fn end(self) -> TestResult {
-        assert_next_token!(self.ser, self.end);
-        Ok(())
-    }
-}
-
 macro_rules! impl_complex_serialize {
     ($tr:ident: $($method:ident),+) => {
         impl ser::$tr for ComplexSerializer<'_, '_> {
@@ -376,13 +369,17 @@ macro_rules! impl_complex_serialize {
             type Error = Error;
 
             $(
-            fn $method<T: Serialize + ?Sized>(&mut self, value: &T) -> TestResult {
+            fn $method<T: ?Sized>(&mut self, value: &T) -> TestResult
+            where
+                T: Serialize,
+            {
                 value.serialize(&mut *self.ser)
             }
             )+
 
             fn end(self) -> TestResult {
-                self.end()
+                assert_next_token!(self.ser, self.end);
+                Ok(())
             }
         }
     };
@@ -392,13 +389,27 @@ macro_rules! impl_complex_serialize {
             type Ok = ();
             type Error = Error;
 
-            fn $method<T: Serialize + ?Sized>(&mut self, key: &'static str, value: &T) -> TestResult {
+            fn $method<T: ?Sized>(&mut self, key: &'static str, value: &T) -> TestResult
+            where
+                T: Serialize,
+            {
                 key.serialize(&mut *self.ser)?;
                 value.serialize(&mut *self.ser)
             }
 
+            fn skip_field(&mut self, key: &'static str) -> TestResult {
+                match self.ser.tokens.first() {
+                    Some(Token::SkipStructField { .. }) => {
+                        assert_next_token!(self.ser, Token::SkipStructField { name: key });
+                    }
+                    _ => {}
+                }
+                Ok(())
+            }
+
             fn end(self) -> TestResult {
-                self.end()
+                assert_next_token!(self.ser, self.end);
+                Ok(())
             }
         }
     };

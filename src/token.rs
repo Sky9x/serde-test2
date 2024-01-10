@@ -513,6 +513,10 @@ pub enum Token<'test, 'de: 'test> {
     /// An indicator of the end of a struct variant.
     StructVariantEnd,
 
+    /// optional indicator that a [`Struct`]/[`StructVariant`] field has been
+    /// skipped.
+    SkipStructField { name: &'static str },
+
     /// The header to an enum of the given name.
     ///
     /// ```
