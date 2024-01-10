@@ -1,23 +1,23 @@
 use crate::error::Error;
-use crate::token::Token;
+use crate::token::{EndToken, Token};
 use crate::TestResult;
 use serde::ser::{self, Serialize};
 
 /// A `Serializer` that ensures that a value serializes to a given list of
 /// tokens.
 #[derive(Debug)]
-pub struct Serializer<'a> {
-    tokens: &'a [Token],
+pub struct Serializer<'test> {
+    tokens: &'test [Token<'test, 'test>],
 }
 
-impl<'a> Serializer<'a> {
+impl<'test> Serializer<'test> {
     /// Creates the serializer.
-    pub fn new(tokens: &'a [Token]) -> Self {
+    pub fn new(tokens: &'test [Token<'test, 'test>]) -> Self {
         Serializer { tokens }
     }
 
     /// Pulls the next token off of the serializer, ignoring it.
-    fn next_token(&mut self) -> Option<Token> {
+    fn next_token(&mut self) -> Option<Token<'test, 'test>> {
         if let Some((&first, rest)) = self.tokens.split_first() {
             self.tokens = rest;
             Some(first)
@@ -28,10 +28,6 @@ impl<'a> Serializer<'a> {
 
     pub fn remaining(&self) -> usize {
         self.tokens.len()
-    }
-
-    fn peek(&self) -> Option<Token> {
-        self.tokens.first().copied()
     }
 }
 
@@ -70,27 +66,27 @@ macro_rules! assert_next_token {
     ($ser:expr, $actual:expr, $pat:pat, $guard:expr) => {
         match $ser.next_token() {
             Some($pat) if $guard => {}
-            Some(expected) => return Err(Error::assert_failed(
+            Some(expected) => return Err(Error::new(
                 format_args!("expected Token::{} but serialized as {}", expected, $actual)
             )),
-            None => return Err(Error::assert_failed(
+            None => return Err(Error::new(
                 format_args!("expected end of tokens, but {} was serialized", $actual)
             )),
         }
     };
 }
 
-impl<'s, 'a: 's> ser::Serializer for &'s mut Serializer<'a> {
+impl<'a, 'test: 'a> ser::Serializer for &'a mut Serializer<'test> {
     type Ok = ();
     type Error = Error;
 
-    type SerializeSeq = ComplexSerializer<'s, 'a>;
-    type SerializeTuple = ComplexSerializer<'s, 'a>;
-    type SerializeTupleStruct = ComplexSerializer<'s, 'a>;
-    type SerializeTupleVariant = ComplexSerializer<'s, 'a>;
-    type SerializeMap = ComplexSerializer<'s, 'a>;
-    type SerializeStruct = ComplexSerializer<'s, 'a>;
-    type SerializeStructVariant = ComplexSerializer<'s, 'a>;
+    type SerializeSeq = ComplexSerializer<'a, 'test>;
+    type SerializeTuple = ComplexSerializer<'a, 'test>;
+    type SerializeTupleStruct = ComplexSerializer<'a, 'test>;
+    type SerializeTupleVariant = ComplexSerializer<'a, 'test>;
+    type SerializeMap = ComplexSerializer<'a, 'test>;
+    type SerializeStruct = ComplexSerializer<'a, 'test>;
+    type SerializeStructVariant = ComplexSerializer<'a, 'test>;
 
     fn serialize_bool(self, v: bool) -> Result<(), Error> {
         assert_next_token!(self, Bool(v));
@@ -246,21 +242,21 @@ impl<'s, 'a: 's> ser::Serializer for &'s mut Serializer<'a> {
         value.serialize(self)
     }
 
-    fn serialize_seq(self, len: Option<usize>) -> TestResult<ComplexSerializer<'s, 'a>> {
+    fn serialize_seq(self, len: Option<usize>) -> TestResult<ComplexSerializer<'a, 'test>> {
         assert_next_token!(self, Seq { len });
 
         Ok(ComplexSerializer {
             ser: self,
-            end: Token::SeqEnd,
+            end: EndToken::Seq,
         })
     }
 
-    fn serialize_tuple(self, len: usize) -> TestResult<ComplexSerializer<'s, 'a>> {
+    fn serialize_tuple(self, len: usize) -> TestResult<ComplexSerializer<'a, 'test>> {
         assert_next_token!(self, Tuple { len });
 
         Ok(ComplexSerializer {
             ser: self,
-            end: Token::TupleEnd,
+            end: EndToken::Tuple,
         })
     }
 
@@ -268,12 +264,12 @@ impl<'s, 'a: 's> ser::Serializer for &'s mut Serializer<'a> {
         self,
         name: &'static str,
         len: usize,
-    ) -> TestResult<ComplexSerializer<'s, 'a>> {
+    ) -> TestResult<ComplexSerializer<'a, 'test>> {
         assert_next_token!(self, TupleStruct { name, len });
 
         Ok(ComplexSerializer {
             ser: self,
-            end: Token::TupleStructEnd,
+            end: EndToken::TupleStruct,
         })
     }
 
@@ -283,7 +279,7 @@ impl<'s, 'a: 's> ser::Serializer for &'s mut Serializer<'a> {
         _variant_index: u32,
         variant: &'static str,
         len: usize,
-    ) -> TestResult<ComplexSerializer<'s, 'a>> {
+    ) -> TestResult<ComplexSerializer<'a, 'test>> {
         if self.tokens.first() == Some(&Token::Enum { name }) {
             self.next_token();
             assert_next_token!(self, Str(variant));
@@ -292,24 +288,24 @@ impl<'s, 'a: 's> ser::Serializer for &'s mut Serializer<'a> {
 
             Ok(ComplexSerializer {
                 ser: self,
-                end: Token::SeqEnd,
+                end: EndToken::Seq,
             })
         } else {
             assert_next_token!(self, TupleVariant { name, variant, len });
 
             Ok(ComplexSerializer {
                 ser: self,
-                end: Token::TupleVariantEnd,
+                end: EndToken::TupleVariant,
             })
         }
     }
 
-    fn serialize_map(self, len: Option<usize>) -> TestResult<ComplexSerializer<'s, 'a>> {
+    fn serialize_map(self, len: Option<usize>) -> TestResult<ComplexSerializer<'a, 'test>> {
         assert_next_token!(self, Map { len });
 
         Ok(ComplexSerializer {
             ser: self,
-            end: Token::MapEnd,
+            end: EndToken::Map,
         })
     }
 
@@ -317,12 +313,12 @@ impl<'s, 'a: 's> ser::Serializer for &'s mut Serializer<'a> {
         self,
         name: &'static str,
         len: usize,
-    ) -> TestResult<ComplexSerializer<'s, 'a>> {
+    ) -> TestResult<ComplexSerializer<'a, 'test>> {
         assert_next_token!(self, Struct { name, len });
 
         Ok(ComplexSerializer {
             ser: self,
-            end: Token::StructEnd,
+            end: EndToken::Struct,
         })
     }
 
@@ -332,7 +328,7 @@ impl<'s, 'a: 's> ser::Serializer for &'s mut Serializer<'a> {
         _variant_index: u32,
         variant: &'static str,
         len: usize,
-    ) -> TestResult<ComplexSerializer<'s, 'a>> {
+    ) -> TestResult<ComplexSerializer<'a, 'test>> {
         if self.tokens.first() == Some(&Token::Enum { name }) {
             self.next_token();
             assert_next_token!(self, Str(variant));
@@ -341,14 +337,14 @@ impl<'s, 'a: 's> ser::Serializer for &'s mut Serializer<'a> {
 
             Ok(ComplexSerializer {
                 ser: self,
-                end: Token::MapEnd,
+                end: EndToken::Map,
             })
         } else {
             assert_next_token!(self, StructVariant { name, variant, len });
 
             Ok(ComplexSerializer {
                 ser: self,
-                end: Token::StructVariantEnd,
+                end: EndToken::StructVariant,
             })
         }
     }
@@ -361,12 +357,12 @@ impl<'s, 'a: 's> ser::Serializer for &'s mut Serializer<'a> {
     }
 }
 
-pub struct ComplexSerializer<'s, 'a: 's> {
-    ser: &'s mut Serializer<'a>,
-    end: Token,
+pub struct ComplexSerializer<'a, 'test: 'a> {
+    ser: &'a mut Serializer<'test>,
+    end: EndToken,
 }
 
-impl<'s, 'a> ComplexSerializer<'s, 'a> {
+impl ComplexSerializer<'_, '_> {
     fn end(self) -> TestResult {
         assert_next_token!(self.ser, self.end);
         Ok(())
@@ -375,7 +371,7 @@ impl<'s, 'a> ComplexSerializer<'s, 'a> {
 
 macro_rules! impl_complex_serialize {
     ($tr:ident: $($method:ident),+) => {
-        impl<'s, 'a> ser::$tr for ComplexSerializer<'s, 'a> {
+        impl ser::$tr for ComplexSerializer<'_, '_> {
             type Ok = ();
             type Error = Error;
 
@@ -392,7 +388,7 @@ macro_rules! impl_complex_serialize {
     };
 
     (struct $tr:ident: $method:ident) => {
-        impl<'s, 'a> ser::$tr for ComplexSerializer<'s, 'a> {
+        impl ser::$tr for ComplexSerializer<'_, '_> {
             type Ok = ();
             type Error = Error;
 

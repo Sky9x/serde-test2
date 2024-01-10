@@ -145,6 +145,7 @@
 //! ```
 
 // #![doc(html_root_url = "https://docs.rs/serde_test/1.0.176")] // FIXME
+#![deny(elided_lifetimes_in_paths)]
 // Ignored clippy lints
 #![allow(clippy::float_cmp, clippy::needless_doctest_main)]
 // Ignored clippy_pedantic lints

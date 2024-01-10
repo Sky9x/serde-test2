@@ -5,37 +5,18 @@ use std::fmt::{self, Display, Formatter};
 #[derive(Clone, Debug)]
 pub struct Error {
     msg: String,
-    kind: ErrorKind,
 }
 
 impl Error {
     pub fn new(msg: impl Display) -> Self {
         Error {
             msg: msg.to_string(),
-            kind: ErrorKind::Custom,
-        }
-    }
-
-    pub(crate) fn assert_failed(msg: impl Display) -> Self {
-        Error {
-            msg: msg.to_string(),
-            kind: ErrorKind::AssertFailed,
         }
     }
 
     pub fn msg(&self) -> &str {
         &self.msg
     }
-}
-
-#[derive(Clone, Debug)]
-enum ErrorKind {
-    Custom,
-    /// An assertion failed
-    ///
-    /// Matched on in the assert_tokens to panic on assertion failure.
-    /// We shouldn't panic in de/serializer impls because of track_caller hell
-    AssertFailed,
 }
 
 pub type TestResult<T = ()> = Result<T, Error>;
@@ -53,7 +34,7 @@ impl de::Error for Error {
 }
 
 impl Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.pad(self.msg())
     }
 }

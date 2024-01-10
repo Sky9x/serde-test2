@@ -589,7 +589,7 @@ macro_rules! impl_deserializer {
             D: Visitor<'de>,
         {
             type Value = D::Value;
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                 self.0.expecting(formatter)
             }
             fn visit_bool<E>(self, v: bool) -> Result<D::Value, E>

@@ -30,7 +30,7 @@ use std::fmt::Debug;
 /// );
 /// ```
 #[track_caller]
-pub fn assert_tokens<'de, T>(value: &T, tokens: &'de [Token])
+pub fn assert_tokens<'test, 'de, T>(value: &T, tokens: &[Token<'test, 'de>])
 where
     T: Serialize + Deserialize<'de> + PartialEq + Debug,
 {
@@ -64,7 +64,7 @@ where
 /// );
 /// ```
 #[track_caller]
-pub fn assert_ser_tokens<T: ?Sized>(value: &T, tokens: &[Token])
+pub fn assert_ser_tokens<T: ?Sized>(value: &T, tokens: &[Token<'_, '_>])
 where
     T: Serialize,
 {
@@ -122,7 +122,7 @@ where
 /// }
 /// ```
 #[track_caller]
-pub fn assert_ser_tokens_error<T: ?Sized>(value: &T, tokens: &[Token], error: &str)
+pub fn assert_ser_tokens_error<T: ?Sized>(value: &T, tokens: &[Token<'_, '_>], error: &str)
 where
     T: Serialize,
 {
@@ -163,7 +163,7 @@ where
 /// );
 /// ```
 #[track_caller]
-pub fn assert_de_tokens<'de, T>(value: &T, tokens: &'de [Token])
+pub fn assert_de_tokens<'test, 'de: 'test, T>(value: &T, tokens: &'test [Token<'test, 'de>])
 where
     T: Deserialize<'de> + PartialEq + Debug,
 {
@@ -216,14 +216,14 @@ where
 /// );
 /// ```
 #[track_caller]
-pub fn assert_de_tokens_error<'de, T>(tokens: &'de [Token], error: &str)
+pub fn assert_de_tokens_error<'de, T>(tokens: &[Token<'_, 'de>], error: &str)
 where
     T: Deserialize<'de>,
 {
     let mut de = Deserializer::new(tokens);
     match T::deserialize(&mut de) {
         Ok(_) => panic!("tokens deserialized successfully"),
-        Err(e) => assert_eq!(e, error),
+        Err(e) => assert_eq!(e.msg(), error),
     }
 
     // FIXME ????

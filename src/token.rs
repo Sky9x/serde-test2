@@ -2,7 +2,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[non_exhaustive]
-pub enum Token {
+pub enum Token<'test, 'de: 'test> {
     /// A serialized `bool`.
     ///
     /// ```
@@ -137,7 +137,7 @@ pub enum Token {
     /// let s = String::from("transient");
     /// assert_tokens(&s, &[Token::Str("transient")]);
     /// ```
-    Str(&'static str),
+    Str(&'test str),
 
     /// A borrowed `str`.
     ///
@@ -147,7 +147,7 @@ pub enum Token {
     /// let s: &str = "borrowed";
     /// assert_tokens(&s, &[Token::BorrowedStr("borrowed")]);
     /// ```
-    BorrowedStr(&'static str),
+    BorrowedStr(&'de str),
 
     /// A serialized `String`.
     ///
@@ -157,16 +157,16 @@ pub enum Token {
     /// let s = String::from("owned");
     /// assert_tokens(&s, &[Token::String("owned")]);
     /// ```
-    String(&'static str),
+    String(&'test str),
 
     /// A serialized `[u8]`
-    Bytes(&'static [u8]),
+    Bytes(&'test [u8]),
 
     /// A borrowed `[u8]`.
-    BorrowedBytes(&'static [u8]),
+    BorrowedBytes(&'de [u8]),
 
     /// A serialized `ByteBuf`
-    ByteBuf(&'static [u8]),
+    ByteBuf(&'test [u8]),
 
     /// A serialized `Option<T>` containing none.
     ///
@@ -570,8 +570,54 @@ pub enum Token {
     Enum { name: &'static str },
 }
 
-impl Display for Token {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+impl Display for Token<'_, '_> {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         Debug::fmt(self, formatter)
+    }
+}
+
+//
+
+#[derive(Copy, Clone, PartialEq)]
+pub(crate) enum EndToken {
+    Seq,
+    Tuple,
+    TupleStruct,
+    TupleVariant,
+    Map,
+    Struct,
+    StructVariant,
+}
+
+impl EndToken {
+    // FIXME to_token? into_token?
+    pub(crate) fn token(self) -> Token<'static, 'static> {
+        match self {
+            EndToken::Seq => Token::SeqEnd,
+            EndToken::Tuple => Token::TupleEnd,
+            EndToken::TupleStruct => Token::TupleStructEnd,
+            EndToken::TupleVariant => Token::TupleVariantEnd,
+            EndToken::Map => Token::MapEnd,
+            EndToken::Struct => Token::StructEnd,
+            EndToken::StructVariant => Token::StructVariantEnd,
+        }
+    }
+}
+
+impl PartialEq<EndToken> for Token<'_, '_> {
+    fn eq(&self, other: &EndToken) -> bool {
+        *self == other.token()
+    }
+}
+
+impl Debug for EndToken {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        Debug::fmt(&self.token(), f)
+    }
+}
+
+impl Display for EndToken {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        Display::fmt(&self.token(), f)
     }
 }
