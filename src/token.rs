@@ -1,6 +1,6 @@
-use std::fmt::{self, Debug, Display};
+use std::fmt::{self, Debug, Display, Formatter};
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Token {
     /// A serialized `bool`.
     ///
@@ -16,7 +16,7 @@ pub enum Token {
     /// ```
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// assert_tokens(&0i8, &[Token::I8(0)]);
+    /// assert_tokens(&0_i8, &[Token::I8(0)]);
     /// ```
     I8(i8),
 
@@ -25,7 +25,7 @@ pub enum Token {
     /// ```
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// assert_tokens(&0i16, &[Token::I16(0)]);
+    /// assert_tokens(&0_i16, &[Token::I16(0)]);
     /// ```
     I16(i16),
 
@@ -34,7 +34,7 @@ pub enum Token {
     /// ```
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// assert_tokens(&0i32, &[Token::I32(0)]);
+    /// assert_tokens(&0_i32, &[Token::I32(0)]);
     /// ```
     I32(i32),
 
@@ -43,7 +43,7 @@ pub enum Token {
     /// ```
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// assert_tokens(&0i64, &[Token::I64(0)]);
+    /// assert_tokens(&0_i64, &[Token::I64(0)]);
     /// ```
     I64(i64),
 
@@ -52,7 +52,7 @@ pub enum Token {
     /// ```
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// assert_tokens(&0u8, &[Token::U8(0)]);
+    /// assert_tokens(&0_u8, &[Token::U8(0)]);
     /// ```
     U8(u8),
 
@@ -61,7 +61,7 @@ pub enum Token {
     /// ```
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// assert_tokens(&0u16, &[Token::U16(0)]);
+    /// assert_tokens(&0_u16, &[Token::U16(0)]);
     /// ```
     U16(u16),
 
@@ -70,7 +70,7 @@ pub enum Token {
     /// ```
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// assert_tokens(&0u32, &[Token::U32(0)]);
+    /// assert_tokens(&0_u32, &[Token::U32(0)]);
     /// ```
     U32(u32),
 
@@ -79,7 +79,7 @@ pub enum Token {
     /// ```
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// assert_tokens(&0u64, &[Token::U64(0)]);
+    /// assert_tokens(&0_u64, &[Token::U64(0)]);
     /// ```
     U64(u64),
 
@@ -186,12 +186,10 @@ pub enum Token {
     /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// # fn main() {
-    /// #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    /// #[derive(Serialize, Deserialize)]
     /// struct X;
     ///
     /// assert_tokens(&X, &[Token::UnitStruct { name: "X" }]);
-    /// # }
     /// ```
     UnitStruct { name: &'static str },
 
@@ -203,15 +201,14 @@ pub enum Token {
     /// #
     /// # fn main() {
     /// #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    /// enum E {
+    /// enum Foo {
     ///     A,
     /// }
     ///
-    /// let a = E::A;
     /// assert_tokens(
-    ///     &a,
+    ///     &Foo::A,
     ///     &[Token::UnitVariant {
-    ///         name: "E",
+    ///         name: "Foo",
     ///         variant: "A",
     ///     }],
     /// );
@@ -555,7 +552,7 @@ pub enum Token {
 }
 
 impl Display for Token {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         Debug::fmt(self, formatter)
     }
 }
