@@ -167,4 +167,5 @@ pub use crate::assert::{
     assert_tokens,
 };
 pub use crate::configure::{Compact, Configure, Readable};
+pub use crate::error::{Error, TestResult};
 pub use crate::token::Token;
