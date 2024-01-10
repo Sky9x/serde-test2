@@ -223,9 +223,10 @@ where
     let mut de = Deserializer::new(tokens);
     match T::deserialize(&mut de) {
         Ok(_) => panic!("tokens deserialized successfully"),
-        Err(e) => assert_eq!(e, *error),
+        Err(e) => assert_eq!(e, error),
     }
 
+    // FIXME ????
     // There may be one token left if a peek caused the error
     de.next_token_opt();
 

@@ -9,7 +9,7 @@ edition = "2021"
 keywords = ["serde", "serialization", "testing", "dev-dependencies"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Sky9x/serde-test2"
-rust-version = "1.56"
+rust-version = "1.62"
 
 [dependencies]
 serde = "1.0.69"
