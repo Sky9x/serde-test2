@@ -144,12 +144,11 @@
 //! # }
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/serde_test/1.0.176")]
+// #![doc(html_root_url = "https://docs.rs/serde_test/1.0.176")] // FIXME
 // Ignored clippy lints
 #![allow(clippy::float_cmp, clippy::needless_doctest_main)]
 // Ignored clippy_pedantic lints
 #![allow(
-    clippy::manual_assert,
     clippy::missing_panics_doc,
     clippy::module_name_repetitions,
     clippy::too_many_lines
