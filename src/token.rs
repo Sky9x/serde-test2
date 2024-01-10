@@ -1,6 +1,7 @@
 use std::fmt::{self, Debug, Display, Formatter};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[non_exhaustive]
 pub enum Token {
     /// A serialized `bool`.
     ///
