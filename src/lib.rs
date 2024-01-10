@@ -154,11 +154,12 @@
     clippy::too_many_lines
 )]
 
+pub mod de;
+pub mod ser;
+
 mod assert;
 mod configure;
-mod de;
 mod error;
-mod ser;
 mod token;
 
 pub use crate::assert::{

@@ -205,7 +205,7 @@ pub enum Token {
     /// # use serde::{Deserialize, Serialize};
     /// # use serde_test::{assert_tokens, Token};
     /// #
-    /// #[derive(Serialize, Deserialize)]
+    /// #[derive(Serialize, Deserialize, PartialEq, Debug)]
     /// struct X;
     ///
     /// assert_tokens(&X, &[Token::UnitStruct { name: "X" }]);

@@ -22,6 +22,10 @@ impl Error {
             kind: ErrorKind::AssertFailed,
         }
     }
+
+    pub fn msg(&self) -> &str {
+        &self.msg
+    }
 }
 
 #[derive(Clone, Debug)]

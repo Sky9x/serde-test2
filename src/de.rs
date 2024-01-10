@@ -15,11 +15,11 @@ pub struct Deserializer<'de> {
 fn assert_next_token(de: &mut Deserializer, expected: Token) -> Result<(), Error> {
     match de.next_token_opt() {
         Some(token) if token == expected => Ok(()),
-        Some(other) => Err(de::Error::custom(format!(
+        Some(other) => Err(Error::assert_failed(format_args!(
             "expected Token::{} but deserialization wants Token::{}",
             other, expected,
         ))),
-        None => Err(de::Error::custom(format!(
+        None => Err(Error::assert_failed(format_args!(
             "end of tokens but deserialization wants Token::{}",
             expected,
         ))),
@@ -27,14 +27,14 @@ fn assert_next_token(de: &mut Deserializer, expected: Token) -> Result<(), Error
 }
 
 fn unexpected(token: Token) -> Error {
-    de::Error::custom(format!(
+    Error::assert_failed(format_args!(
         "deserialization did not expect this token: {}",
         token,
     ))
 }
 
 fn end_of_tokens() -> Error {
-    de::Error::custom("ran out of tokens to deserialize")
+    Error::assert_failed("ran out of tokens to deserialize")
 }
 
 impl<'de> Deserializer<'de> {
@@ -118,10 +118,12 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             Token::I16(v) => visitor.visit_i16(v),
             Token::I32(v) => visitor.visit_i32(v),
             Token::I64(v) => visitor.visit_i64(v),
+            Token::I128(v) => visitor.visit_i128(v),
             Token::U8(v) => visitor.visit_u8(v),
             Token::U16(v) => visitor.visit_u16(v),
             Token::U32(v) => visitor.visit_u32(v),
             Token::U64(v) => visitor.visit_u64(v),
+            Token::U128(v) => visitor.visit_u128(v),
             Token::F32(v) => visitor.visit_f32(v),
             Token::F64(v) => visitor.visit_f64(v),
             Token::Char(v) => visitor.visit_char(v),
@@ -130,7 +132,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             Token::String(v) => visitor.visit_string(v.to_owned()),
             Token::Bytes(v) => visitor.visit_bytes(v),
             Token::BorrowedBytes(v) => visitor.visit_borrowed_bytes(v),
-            Token::ByteBuf(v) => visitor.visit_byte_buf(v.to_vec()),
+            Token::ByteBuf(v) => visitor.visit_byte_buf(v.to_owned()),
             Token::None => visitor.visit_none(),
             Token::Some => visitor.visit_some(self),
             Token::Unit | Token::UnitStruct { .. } => visitor.visit_unit(),
@@ -230,33 +232,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             Token::Some => {
                 self.next_token()?;
                 visitor.visit_some(self)
-            }
-            _ => self.deserialize_any(visitor),
-        }
-    }
-
-    fn deserialize_enum<V>(
-        self,
-        name: &'static str,
-        _variants: &'static [&'static str],
-        visitor: V,
-    ) -> Result<V::Value, Error>
-    where
-        V: Visitor<'de>,
-    {
-        match self.peek_token()? {
-            Token::Enum { name: n } if name == n => {
-                self.next_token()?;
-
-                visitor.visit_enum(DeserializerEnumVisitor { de: self })
-            }
-            Token::UnitVariant { name: n, .. }
-            | Token::NewtypeVariant { name: n, .. }
-            | Token::TupleVariant { name: n, .. }
-            | Token::StructVariant { name: n, .. }
-                if name == n =>
-            {
-                visitor.visit_enum(DeserializerEnumVisitor { de: self })
             }
             _ => self.deserialize_any(visitor),
         }
@@ -368,6 +343,33 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             Token::Map { .. } => {
                 self.next_token()?;
                 self.visit_map(Some(fields.len()), Token::MapEnd, visitor)
+            }
+            _ => self.deserialize_any(visitor),
+        }
+    }
+
+    fn deserialize_enum<V>(
+        self,
+        name: &'static str,
+        _variants: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self.peek_token()? {
+            Token::Enum { name: n } if name == n => {
+                self.next_token()?;
+
+                visitor.visit_enum(DeserializerEnumVisitor { de: self })
+            }
+            Token::UnitVariant { name: n, .. }
+            | Token::NewtypeVariant { name: n, .. }
+            | Token::TupleVariant { name: n, .. }
+            | Token::StructVariant { name: n, .. }
+                if name == n =>
+            {
+                visitor.visit_enum(DeserializerEnumVisitor { de: self })
             }
             _ => self.deserialize_any(visitor),
         }
